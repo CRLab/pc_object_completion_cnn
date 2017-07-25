@@ -1,9 +1,7 @@
 # pc_object_completion_cnn
 ROS node for shape completion. This node runs an action server to take in pointclouds representing partial views of an object, and returning a completed mesh of the object. 
 
-This is the maintained code base for the shape completion CNN from the IROS 2017 paper "Shape Completion Enabled Robotic Grasping", and is easiest to use as integrated in the point cloud processing framework: https://github.com/CURG/pc_pipeline_launch.
-
-
+This is the maintained code base for the shape completion CNN from the IROS 2017 paper "Shape Completion Enabled Robotic Grasping"
 ```
 @inproceedings{varley2017shape,
   title={Shape Completion Enabled Robotic Grasping},
@@ -13,19 +11,18 @@ This is the maintained code base for the shape completion CNN from the IROS 2017
   organization={IEEE}
 }
 ```
-This has been tested on ubuntu 14.04 and ROS Indigo and ubuntu 16.04 and ROS Kinetic.  You will need to first setup Keras with a tensorflow backend.  See their documentation to do this. https://github.com/fchollet/keras/
+## Dependencies
+This has been tested on ubuntu 14.04 and ROS Indigo and ubuntu 16.04 and ROS Kinetic.  You will need to first setup Keras with a tensorflow backend.  Setup instructions can be found here: https://github.com/fchollet/keras/
 
 This repos is best run as part of: https://github.com/CURG/pc_pipeline_launch which should be setup first. Once the pc_pipeline is setup, this node offers a drop in replacement for pc_object_completion_partial.
 
-## Other Dependencies
+## Other Smaller Dependencies
 ```
 git clone git@github.com:CURG/binvox-rw-py.git
 git clone git@github.com:ShapeCompletion3D/python-pcl.git
 git clone git@github.com:CURG/Curvox.git
 git clone git@github.com:CURG/Mesh_Reconstruction.git
 ```
-
-<b>keras</b> (tensorflow backend): Deep learning library used to train the CNN, you need this to run a trained model as well.
 
 <b>binvox_rw</b>: python utility library to read and write voxel grids to run length encoded binvox files
 
