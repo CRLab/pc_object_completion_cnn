@@ -30,3 +30,11 @@ The weight file is too large to commit to github, so after cloning this repo, ru
 cd pc_object_completion_cnn/scripts/shape_completion_server/trained_models
 ./download_trained_model.sh
 ```
+
+You will also need to modify set_env.sh to correctly set where to reach your ROS core. 
+
+## Running
+```
+source set_env.sh
+rosrun pc_object_completion_cnn mesh_completion_server.py
+```
