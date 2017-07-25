@@ -1,6 +1,17 @@
 # pc_object_completion_cnn
-ROS node for shape completion. Part of the point cloud processing framework https://github.com/CURG/pc_pipeline_launch
+ROS node for shape completion. Part of the point cloud processing framework https://github.com/CURG/pc_pipeline_launch, and the code base for the shape completion CNN to appear in IROS 2017 paper "Shape Completion Enabled Robotic Grasping".
 
+```
+@inproceedings{varley2017shape,
+  title={Shape Completion Enabled Robotic Grasping},
+  author={Varley, Jacob and DeChant, Chad and Richardson, Adam and Nair, Avinash and Ruales, Joaqu{\'\i}n and Allen, Peter},
+  booktitle={Intelligent Robots and Systems (IROS), 2017 IEEE/RSJ International Conference on},
+  year={2017},
+  organization={IEEE}
+}
+
+
+```
 ## Dependencies
 This has been tested on ubuntu 14.04 and ROS Indigo and ubuntu 16.04 and ROS Kinetic.  You will need to first setup Keras with a tensorflow backend.  See their documentation to do this. https://github.com/fchollet/keras/
 ```
