@@ -1,0 +1,5 @@
+#Request
+string cnn_name
+---
+#Response
+bool success
