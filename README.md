@@ -1,5 +1,8 @@
 # pc_object_completion_cnn
-ROS node for shape completion. Part of the point cloud processing framework https://github.com/CURG/pc_pipeline_launch, and the code base for the shape completion CNN to appear in IROS 2017 paper "Shape Completion Enabled Robotic Grasping".
+ROS node for shape completion. This node runs an action server to take in pointclouds representing partial views of an object, and returning a completed mesh of the object. 
+
+This node is easiest to use as integrated in the point cloud processing framework https://github.com/CURG/pc_pipeline_launch.
+This is the maintained code base for the shape completion CNN from the IROS 2017 paper "Shape Completion Enabled Robotic Grasping".
 
 ```
 @inproceedings{varley2017shape,
@@ -10,10 +13,12 @@ ROS node for shape completion. Part of the point cloud processing framework http
   organization={IEEE}
 }
 ```
-## Dependencies
 This has been tested on ubuntu 14.04 and ROS Indigo and ubuntu 16.04 and ROS Kinetic.  You will need to first setup Keras with a tensorflow backend.  See their documentation to do this. https://github.com/fchollet/keras/
+
+This repos is best run as part of: https://github.com/CURG/pc_pipeline_launch which should be setup first. Once the pc_pipeline is setup, this node offers a drop in replacement for pc_object_completion_partial.
+
+## Other Dependencies
 ```
-non-ros:
 git clone git@github.com:CURG/binvox-rw-py.git
 git clone git@github.com:ShapeCompletion3D/python-pcl.git
 git clone git@github.com:CURG/Curvox.git
@@ -31,7 +36,6 @@ git clone git@github.com:CURG/Mesh_Reconstruction.git
 <b>Mesh_Reconstruction</b>: Code from IROS 2017 "Shape Completion Enabled Robotic Grasping" paper. This code takes the 40^3 voxel grid output from the CNN and combines it with the high resolution observed pointcloud directly captured from the depth sensor.  This way the visible portions of the completions are nicely detailed. 
 
 ## Setup
-The weight file is too large to commit to github, so after cloning this repo, run the following to download a trained model from our server.
 ```
 cd ~
 mkdir -p ~/cnn_completion_ws/src
