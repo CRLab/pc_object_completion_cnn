@@ -1,8 +1,8 @@
 # pc_object_completion_cnn
 ROS node for shape completion. This node runs an action server to take in pointclouds representing partial views of an object, and returning a completed mesh of the object. 
 
-This node is easiest to use as integrated in the point cloud processing framework https://github.com/CURG/pc_pipeline_launch.
-This is the maintained code base for the shape completion CNN from the IROS 2017 paper "Shape Completion Enabled Robotic Grasping".
+This is the maintained code base for the shape completion CNN from the IROS 2017 paper "Shape Completion Enabled Robotic Grasping", and is easiest to use as integrated in the point cloud processing framework: https://github.com/CURG/pc_pipeline_launch.
+
 
 ```
 @inproceedings{varley2017shape,
