@@ -17,6 +17,6 @@ pc_pipeline_msgs: https://github.com/CURG/pc_pipeline_msgs
 ## Setup
 The weight file is too large to commit to github, so after cloning this repo, run the following to download a trained model from our server.
 ```
-cd pc_object_completion_cnn/trained_models
+cd pc_object_completion_cnn/scripts/shape_completion_server/trained_models
 ./download_trained_model.sh
 ```
