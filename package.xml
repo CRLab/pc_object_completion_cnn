@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <package>
-  <name>shape_completion_server</name>
+  <name>pc_object_completion_cnn</name>
   <version>0.0.0</version>
-  <description>The shape_completion_server package</description>
+  <description>The pc_object_completion_cnn package. Contains the ROS action server for running shape completion</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="jvarley@todo.todo">jvarley</maintainer>
+  <maintainer email="jakevarley@gmail.com">jvarley</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>MIT</license>
 
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->

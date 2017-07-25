@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(shape_completion_server)
+project(pc_object_completion_cnn)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
