@@ -18,9 +18,6 @@ git clone git@github.com:CURG/binvox-rw-py.git
 git clone git@github.com:ShapeCompletion3D/python-pcl.git
 git clone git@github.com:CURG/Curvox.git
 git clone git@github.com:CURG/Mesh_Reconstruction.git
-
-ros:
-git clone git@github.com:CURG/pc_pipeline_msgs.git
 ```
 
 <b>keras</b> (tensorflow backend): Deep learning library used to train the CNN, you need this to run a trained model as well.
@@ -36,14 +33,27 @@ git clone git@github.com:CURG/pc_pipeline_msgs.git
 ## Setup
 The weight file is too large to commit to github, so after cloning this repo, run the following to download a trained model from our server.
 ```
-cd pc_object_completion_cnn/scripts/shape_completion_server/trained_models
+cd ~
+mkdir -p ~/cnn_completion_ws/src
+cd ~/cnn_completion_ws/src
+git clone git@github.com:CURG/pc_pipeline_msgs.git
+git clone git@github.com:CURG/pc_object_completion_cnn.git
+
+cd ~/cnn_completion_ws/src/pc_object_completion_cnn/scripts/shape_completion_server/trained_models
 ./download_trained_model.sh
+
+cd ~/cnn_completion_ws
+source /opt/ros/indigo/setup.bash
+catkin_make
 ```
 
 You will also need to modify set_env.sh to correctly set where to reach your ROS core. 
 
 ## Running
 ```
+cd ~/cnn_completion_ws/
+source devel/setup.bash
+cd ~/cnn_completion_ws/src/pc_object_completion_cnn
 source set_env.sh
 rosrun pc_object_completion_cnn mesh_completion_server.py
 ```
