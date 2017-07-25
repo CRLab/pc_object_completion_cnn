@@ -31,12 +31,12 @@ class MeshCompletionServer(object):
 
         self.post_process_executable = "mesh_reconstruction"
 
-        self._feedback = pc_pipeline_msgs.msg.CompleteMeshFeedback()
-        self._result = pc_pipeline_msgs.msg.CompleteMeshResult()
+        self._feedback = pc_pipeline_msgs.msg.CompletePartialCloudFeedback()
+        self._result = pc_pipeline_msgs.msg.CompletePartialCloudResult()
 
         self._as = actionlib.SimpleActionServer(
             "/object_completion",
-            pc_pipeline_msgs.msg.CompleteMeshAction,
+            pc_pipeline_msgs.msg.CompletePartialCloudAction,
             execute_cb=self.completion_cb,
             auto_start=False)
 
@@ -184,7 +184,7 @@ if __name__ == "__main__":
             "cnn_python_module":
             "shape_completion_server.trained_models.depth_y17_m05_d26_h14_m22_s35_bare_keras_v2.reconstruction_network",
             "weights_filepath":
-            rospkg.RosPack().get_path('shape_completion_server') +
+            rospkg.RosPack().get_path('pc_object_completion_cnn') +
             '/scripts/shape_completion_server/trained_models/depth_y17_m05_d26_h14_m22_s35_bare_keras_v2/best_weights.h5'
         }
     }
