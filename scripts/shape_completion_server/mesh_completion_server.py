@@ -182,10 +182,10 @@ if __name__ == "__main__":
     cnns = {
         "depth": {
             "cnn_python_module":
-            "shape_completion_server.trained_models.depth_y17_m05_d26_h14_m22_s35.models.reconstruction_network",
+            "shape_completion_server.trained_models.depth_y17_m05_d26_h14_m22_s35_bare_keras_v2.reconstruction_network",
             "weights_filepath":
             rospkg.RosPack().get_path('shape_completion_server') +
-            '/scripts/shape_completion_server/trained_models/depth_y17_m05_d26_h14_m22_s35/results/best_weights.h5'
+            '/scripts/shape_completion_server/trained_models/depth_y17_m05_d26_h14_m22_s35_bare_keras_v2/best_weights.h5'
         }
     }
 
