@@ -9,8 +9,6 @@ ROS node for shape completion. Part of the point cloud processing framework http
   year={2017},
   organization={IEEE}
 }
-
-
 ```
 ## Dependencies
 This has been tested on ubuntu 14.04 and ROS Indigo and ubuntu 16.04 and ROS Kinetic.  You will need to first setup Keras with a tensorflow backend.  See their documentation to do this. https://github.com/fchollet/keras/
