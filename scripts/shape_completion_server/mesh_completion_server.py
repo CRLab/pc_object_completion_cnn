@@ -4,6 +4,7 @@ import importlib
 import numpy as np
 import subprocess
 import tempfile
+import argparse
 
 import pcl
 import binvox_rw
@@ -20,14 +21,14 @@ import curvox.utils, curvox.mesh_conversions
 
 
 class MeshCompletionServer(object):
-    def __init__(self, cnns):
+    def __init__(self, ns, cnns):
 
         rospy.loginfo("Starting Completion Server")
 
         self.patch_size = 40
         self.cnns = cnns
-        self.cnn_python_module = cnns["depth"]["cnn_python_module"]
-        self.weights_filepath = cnns["depth"]["weights_filepath"]
+        self.cnn_python_module = cnns[ns]["cnn_python_module"]
+        self.weights_filepath = cnns[ns]["weights_filepath"]
 
         py_module = importlib.import_module(self.cnn_python_module)
         global model
@@ -41,13 +42,13 @@ class MeshCompletionServer(object):
         self._result = pc_pipeline_msgs.msg.CompletePartialCloudResult()
 
         self._as = actionlib.SimpleActionServer(
-            "/object_completion",
+            ns + "/object_completion",
             pc_pipeline_msgs.msg.CompletePartialCloudAction,
             execute_cb=self.completion_cb,
             auto_start=False)
 
         self._switch_cnn_type_srv = rospy.Service(
-            '/shape_completion_server/set_cnn_type',
+            ns + '/shape_completion_server/set_cnn_type',
             pc_object_completion_cnn.srv.SetCNNType, self.set_cnn_type)
 
         self._as.start()
@@ -191,6 +192,9 @@ class MeshCompletionServer(object):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description="Complete a partial object view")
+    parser.add_argument("ns", type=str, help="Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile")
+    args= parser.parse_args()
     cnns = {
         "depth": {
             "cnn_python_module":
@@ -198,9 +202,16 @@ if __name__ == "__main__":
             "weights_filepath":
             rospkg.RosPack().get_path('pc_object_completion_cnn') +
             '/scripts/shape_completion_server/trained_models/depth_y17_m05_d26_h14_m22_s35_bare_keras_v2/best_weights.h5'
+        },
+        "depth_and_tactile": {
+            "cnn_python_module":
+            "shape_completion_server.trained_models.depth_and_tactile_y17_m08_d09_h15_m55_s53_bare_keras_v2.reconstruction_network",
+            "weights_filepath":
+            rospkg.RosPack().get_path('pc_object_completion_cnn') +
+            '/scripts/shape_completion_server/trained_models/depth_and_tactile_y17_m08_d09_h15_m55_s53_bare_keras_v2/best_weights.h5'
         }
     }
 
     rospy.init_node("mesh_completion_node")
-    server = MeshCompletionServer(cnns)
+    server = MeshCompletionServer(args.ns, cnns)
     rospy.spin()
