@@ -212,6 +212,6 @@ if __name__ == "__main__":
         }
     }
 
-    rospy.init_node("mesh_completion_node")
+    rospy.init_node(ns + "mesh_completion_node")
     server = MeshCompletionServer(args.ns, cnns)
     rospy.spin()
