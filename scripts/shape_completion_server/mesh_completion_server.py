@@ -29,6 +29,12 @@ class MeshCompletionServer(object):
         self.cnn_python_module = cnns["depth"]["cnn_python_module"]
         self.weights_filepath = cnns["depth"]["weights_filepath"]
 
+        py_module = importlib.import_module(self.cnn_python_module)
+        global model
+        model = py_module.get_model()
+        model.load_weights(self.weights_filepath)
+        model._make_predict_function()
+        
         self.post_process_executable = "mesh_reconstruction"
 
         self._feedback = pc_pipeline_msgs.msg.CompletePartialCloudFeedback()
@@ -50,9 +56,9 @@ class MeshCompletionServer(object):
 
     def complete_voxel_grid(self, batch_x_B012C):
 
-        py_module = importlib.import_module(self.cnn_python_module)
-        self.model = py_module.get_model()
-        self.model.load_weights(self.weights_filepath)
+        # py_module = importlib.import_module(self.cnn_python_module)
+        # self.model = py_module.get_model()
+        # self.model.load_weights(self.weights_filepath)
 
         # The new version of keras takes the data as B012C
         # NOT BZCXY so we do not need to transpose it.
@@ -62,8 +68,8 @@ class MeshCompletionServer(object):
         # pred is actually flat, because we do not have a reshape as the final
         # layer of the net, so pred's shape is something like
         # (batch_size, 40*40*40)
-
-        pred = self.model.predict(batch_x)
+        global model
+        pred = model.predict(batch_x)
 
         # The new version of keras takes the data as B012C
         # NOT BZCXY so we do not need to transpose it.
@@ -82,13 +88,19 @@ class MeshCompletionServer(object):
         self.cnn_python_module = cnns[cnn_name]["cnn_python_module"]
         self.weights_filepath = cnns[cnn_name]["weights_filepath"]
 
+        py_module = importlib.import_module(self.cnn_python_module)
+        global model
+        model = py_module.get_model()
+        model.load_weights(self.weights_filepath)
+
         return shape_completion_server.srv.SetCNNTypeResponse(success=True)
 
     def completion_cb(self, goal):
         rospy.loginfo('Received Completion Goal')
 
-        self._feedback = shape_completion_msgs.msg.CompleteMeshFeedback()
-        self._result = shape_completion_msgs.msg.CompleteMeshResult()
+        self._feedback = pc_pipeline_msgs.msg.CompletePartialCloudFeedback()
+        self._result = pc_pipeline_msgs.msg.CompletePartialCloudResult()
+
         temp_pcd_handle, temp_pcd_filepath = tempfile.mkstemp(suffix=".pcd")
 
         pc = point_cloud2.read_points(goal.partial_cloud)
