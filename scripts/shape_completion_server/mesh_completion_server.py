@@ -5,6 +5,7 @@ import numpy as np
 import subprocess
 import tempfile
 import argparse
+import os
 
 import pcl
 import binvox_rw
@@ -100,7 +101,7 @@ class MeshCompletionServer(object):
         self._result = pc_pipeline_msgs.msg.CompletePartialCloudResult()
 
         temp_pcd_handle, temp_pcd_filepath = tempfile.mkstemp(suffix=".pcd")
-
+        os.close(temp_pcd_handle)
         partial_pc_np = curvox.cloud_conversions.cloud_msg_to_np(goal.partial_cloud)
         pcd = curvox.cloud_conversions.np_to_pcl(partial_pc_np)
         pcl.save(pcd, temp_pcd_filepath)
@@ -150,17 +151,19 @@ class MeshCompletionServer(object):
 
         # Now we save the binvox file so that it can be passed to the
         # post processing along with the partial.pcd
-        _, temp_binvox_filepath = tempfile.mkstemp(suffix="output.binvox")
+        temp_handle, temp_binvox_filepath = tempfile.mkstemp(suffix="output.binvox")
+        os.close(temp_handle)
         binvox_rw.write(completed_vox, open(temp_binvox_filepath, 'w'))
 
         # Now we save the binvox file so that it can be passed to the
         # post processing along with the partial.pcd
-        _, temp_input_binvox_file = tempfile.mkstemp(suffix="input.binvox")
+        temp_handle, temp_input_binvox_file = tempfile.mkstemp(suffix="input.binvox")
+        os.close(temp_handle)
         binvox_rw.write(partial_vox, open(temp_input_binvox_file, 'w'))
 
         # This is the file that the post-processed mesh will be saved it.
-        _, temp_completion_filepath = tempfile.mkstemp(suffix=".ply")
-
+        temp_handle, temp_completion_filepath = tempfile.mkstemp(suffix=".ply")
+        os.close(temp_handle)
         # This command will look something like
         # mesh_reconstruction tmp/completion.binvox tmp/partial.pcd tmp/post_processed.ply
         cmd_str = self.post_process_executable + " " + temp_binvox_filepath + " " + temp_pcd_filepath \
