@@ -17,8 +17,9 @@ import pc_pipeline_msgs.msg
 import pc_object_completion_cnn.srv
 from sensor_msgs import point_cloud2
 
-import curvox.utils, curvox.mesh_conversions
-
+import curvox.pc_vox_utils
+import curvox.mesh_conversions
+import curvox.cloud_conversions
 
 class MeshCompletionServer(object):
     def __init__(self, ns, cnns):
@@ -56,10 +57,6 @@ class MeshCompletionServer(object):
         rospy.loginfo("Started Completion Server")
 
     def complete_voxel_grid(self, batch_x_B012C):
-
-        # py_module = importlib.import_module(self.cnn_python_module)
-        # self.model = py_module.get_model()
-        # self.model.load_weights(self.weights_filepath)
 
         # The new version of keras takes the data as B012C
         # NOT BZCXY so we do not need to transpose it.
@@ -104,24 +101,26 @@ class MeshCompletionServer(object):
 
         temp_pcd_handle, temp_pcd_filepath = tempfile.mkstemp(suffix=".pcd")
 
-        pc = point_cloud2.read_points(goal.partial_cloud)
-        partial_pc_np = np.asarray(list(pc))
-        pcd = pcl.PointCloud(np.array(partial_pc_np[:, 0:3], np.float32))
+        partial_pc_np = curvox.cloud_conversions.cloud_msg_to_np(goal.partial_cloud)
+        pcd = curvox.cloud_conversions.np_to_pcl(partial_pc_np)
         pcl.save(pcd, temp_pcd_filepath)
 
+        partial_vox = curvox.pc_vox_utils.pc_to_binvox_for_shape_completion(points=partial_pc_np[:, 0:3], patch_size=self.patch_size)
+      
         batch_x = np.zeros(
             (1, self.patch_size, self.patch_size, self.patch_size, 1),
             dtype=np.float32)
-        batch_x[
-            0, :, :, :, :], voxel_resolution, offset = curvox.utils.build_test_from_pc_scaled(
-                partial_pc_np[:, 0:3], self.patch_size)
+        batch_x[0, :, :, :, 0] = partial_vox.data
+        
 
-        batch_x = batch_x.transpose(0, 2, 1, 3, 4)
-        batch_x_new = np.zeros_like(batch_x)
-        for i in range(40):
-            batch_x_new[0, i, :, :, 0] = batch_x[0, 40 - i - 1, :, :, 0]
+        flip_batch_x = False
+        if flip_batch_x:
+            batch_x = batch_x.transpose(0, 2, 1, 3, 4)
+            batch_x_new = np.zeros_like(batch_x)
+            for i in range(40):
+                batch_x_new[0, i, :, :, 0] = batch_x[0, 40 - i - 1, :, :, 0]
 
-        batch_x = batch_x_new
+            batch_x = batch_x_new
 
         # output is the completed voxel grid,
         # it is all floats between 0,1 as last layer is softmax
@@ -129,13 +128,13 @@ class MeshCompletionServer(object):
         # output.shape = (X,Y,Z)
         output = self.complete_voxel_grid(batch_x)
 
-        output_new = np.zeros_like(output)
-        for i in range(40):
-            output_new[i, :, :] = output[40 - i - 1, :, :]
+        if flip_batch_x:
+            output_new = np.zeros_like(output)
+            for i in range(40):
+                output_new[i, :, :] = output[40 - i - 1, :, :]
 
-        output = output_new
-
-        output = output.transpose(1, 0, 2)
+            output = output_new
+            output = output.transpose(1, 0, 2)
 
         # mask the output, so above 0.5 is occupied
         # below 0.5 is empty space.
@@ -143,31 +142,21 @@ class MeshCompletionServer(object):
 
         # Save the binary voxel grid as an occupancy map
         # in a binvox file
-        vox = binvox_rw.Voxels(output_vox, (self.patch_size, self.patch_size,
-                                            self.patch_size),
-                               (offset[0], offset[1], offset[2]),
-                               voxel_resolution * self.patch_size, "xyz")
+        completed_vox = binvox_rw.Voxels(output_vox,
+                                        partial_vox.dims,
+                                        partial_vox.translate,
+                                        partial_vox.scale,
+                                        partial_vox.axis_order)
 
         # Now we save the binvox file so that it can be passed to the
         # post processing along with the partial.pcd
         _, temp_binvox_filepath = tempfile.mkstemp(suffix="output.binvox")
-        binvox_rw.write(vox, open(temp_binvox_filepath, 'w'))
-
-        # mask the output, so above 0.5 is occupied
-        # below 0.5 is empty space.
-        input_vox_arr = np.array(batch_x[0, :, :, :, 0]) > 0.5
-
-        # Save the binary voxel grid as an occupancy map
-        # in a binvox file
-        input_vox = binvox_rw.Voxels(
-            input_vox_arr, (self.patch_size, self.patch_size, self.patch_size),
-            (offset[0], offset[1],
-             offset[2]), voxel_resolution * self.patch_size, "xyz")
+        binvox_rw.write(completed_vox, open(temp_binvox_filepath, 'w'))
 
         # Now we save the binvox file so that it can be passed to the
         # post processing along with the partial.pcd
         _, temp_input_binvox_file = tempfile.mkstemp(suffix="input.binvox")
-        binvox_rw.write(input_vox, open(temp_input_binvox_file, 'w'))
+        binvox_rw.write(partial_vox, open(temp_input_binvox_file, 'w'))
 
         # This is the file that the post-processed mesh will be saved it.
         _, temp_completion_filepath = tempfile.mkstemp(suffix=".ply")
@@ -212,6 +201,6 @@ if __name__ == "__main__":
         }
     }
 
-    rospy.init_node(ns + "mesh_completion_node")
+    rospy.init_node(args.ns + "mesh_completion_node")
     server = MeshCompletionServer(args.ns, cnns)
     rospy.spin()
