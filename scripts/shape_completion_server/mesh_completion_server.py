@@ -5,9 +5,10 @@ import numpy as np
 import subprocess
 import tempfile
 import argparse
-
+import time
 import pcl
 import binvox_rw
+import copy
 
 import rospkg
 import actionlib
@@ -17,14 +18,14 @@ import pc_pipeline_msgs.msg
 import pc_object_completion_cnn.srv
 from sensor_msgs import point_cloud2
 
-import curvox.utils, curvox.mesh_conversions
+import curvox.pc_vox_utils, curvox.mesh_conversions
 
 
 class MeshCompletionServer(object):
-    def __init__(self, ns, cnns):
+    def __init__(self, ns, cnns, transpose_input):
 
         rospy.loginfo("Starting Completion Server")
-
+        self.transpose_input = transpose_input
         self.patch_size = 40
         self.cnns = cnns
         self.cnn_python_module = cnns[ns]["cnn_python_module"]
@@ -35,7 +36,7 @@ class MeshCompletionServer(object):
         model = py_module.get_model()
         model.load_weights(self.weights_filepath)
         model._make_predict_function()
-        
+
         self.post_process_executable = "mesh_reconstruction"
 
         self._feedback = pc_pipeline_msgs.msg.CompletePartialCloudFeedback()
@@ -97,6 +98,7 @@ class MeshCompletionServer(object):
         return shape_completion_server.srv.SetCNNTypeResponse(success=True)
 
     def completion_cb(self, goal):
+        start_time = time.time()
         rospy.loginfo('Received Completion Goal')
 
         self._feedback = pc_pipeline_msgs.msg.CompletePartialCloudFeedback()
@@ -109,19 +111,29 @@ class MeshCompletionServer(object):
         pcd = pcl.PointCloud(np.array(partial_pc_np[:, 0:3], np.float32))
         pcl.save(pcd, temp_pcd_filepath)
 
+        rospy.loginfo('Saved Partial')
+
         batch_x = np.zeros(
             (1, self.patch_size, self.patch_size, self.patch_size, 1),
             dtype=np.float32)
-        batch_x[
-            0, :, :, :, :], voxel_resolution, offset = curvox.utils.build_test_from_pc_scaled(
-                partial_pc_np[:, 0:3], self.patch_size)
 
-        batch_x = batch_x.transpose(0, 2, 1, 3, 4)
-        batch_x_new = np.zeros_like(batch_x)
-        for i in range(40):
-            batch_x_new[0, i, :, :, 0] = batch_x[0, 40 - i - 1, :, :, 0]
+        input_vox = curvox.pc_vox_utils.pc_to_binvox_for_shape_completion(
+            partial_pc_np[:, 0:3], self.patch_size)
 
-        batch_x = batch_x_new
+        batch_x[0, :, :, :, 0] = input_vox.data
+        if self.transpose_input:
+            rospy.loginfo("Transposing X before feeding into CNN")
+            batch_x = batch_x.transpose(0, 2, 1, 3, 4)
+            batch_x_new = np.zeros_like(batch_x)
+            for i in range(40):
+                batch_x_new[0, i, :, :, 0] = batch_x[0, 40 - i - 1, :, :, 0]
+
+            batch_x = batch_x_new
+        else:
+            rospy.loginfo(
+                "Not Transposing X before feeding into CNN, if performance is poor, \
+                try settiing transpose_inputs=True"
+            )
 
         # output is the completed voxel grid,
         # it is all floats between 0,1 as last layer is softmax
@@ -129,45 +141,28 @@ class MeshCompletionServer(object):
         # output.shape = (X,Y,Z)
         output = self.complete_voxel_grid(batch_x)
 
-        output_new = np.zeros_like(output)
-        for i in range(40):
-            output_new[i, :, :] = output[40 - i - 1, :, :]
+        if self.transpose_input:
+            rospy.loginfo("Transposing X after feeding into CNN")
+            output_new = np.zeros_like(output)
+            for i in range(40):
+                output_new[i, :, :] = output[40 - i - 1, :, :]
 
-        output = output_new
-
-        output = output.transpose(1, 0, 2)
+                output = output_new
+            output = output.transpose(1, 0, 2)
 
         # mask the output, so above 0.5 is occupied
         # below 0.5 is empty space.
-        output_vox = np.array(output) > 0.5
+        output_vox_np = np.array(output) > 0.5
 
         # Save the binary voxel grid as an occupancy map
         # in a binvox file
-        vox = binvox_rw.Voxels(output_vox, (self.patch_size, self.patch_size,
-                                            self.patch_size),
-                               (offset[0], offset[1], offset[2]),
-                               voxel_resolution * self.patch_size, "xyz")
+        output_vox = copy.deep_copy(input_vox)
+        output_vox.data = output_vox_np
 
         # Now we save the binvox file so that it can be passed to the
         # post processing along with the partial.pcd
         _, temp_binvox_filepath = tempfile.mkstemp(suffix="output.binvox")
-        binvox_rw.write(vox, open(temp_binvox_filepath, 'w'))
-
-        # mask the output, so above 0.5 is occupied
-        # below 0.5 is empty space.
-        input_vox_arr = np.array(batch_x[0, :, :, :, 0]) > 0.5
-
-        # Save the binary voxel grid as an occupancy map
-        # in a binvox file
-        input_vox = binvox_rw.Voxels(
-            input_vox_arr, (self.patch_size, self.patch_size, self.patch_size),
-            (offset[0], offset[1],
-             offset[2]), voxel_resolution * self.patch_size, "xyz")
-
-        # Now we save the binvox file so that it can be passed to the
-        # post processing along with the partial.pcd
-        _, temp_input_binvox_file = tempfile.mkstemp(suffix="input.binvox")
-        binvox_rw.write(input_vox, open(temp_input_binvox_file, 'w'))
+        binvox_rw.write(output_vox, open(temp_binvox_filepath, 'w'))
 
         # This is the file that the post-processed mesh will be saved it.
         _, temp_completion_filepath = tempfile.mkstemp(suffix=".ply")
@@ -185,16 +180,31 @@ class MeshCompletionServer(object):
             temp_completion_filepath)
 
         self._result.mesh = mesh
-
+        end_time = time.time()
+        total_time = end_time - start_time
+        rospy.loginfo("Total Time: " + str(total_time))
         self._as.set_succeeded(self._result)
         rospy.loginfo('Finished Msg')
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Complete a partial object view")
-    parser.add_argument("ns", type=str, help="Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile")
-    args= parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Complete a partial object view")
+    parser.add_argument(
+        "ns",
+        type=str,
+        help=
+        "Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile"
+    )
+    parser.add_argument(
+        "--transpose_input",
+        type=bool,
+        default=True,
+        help=
+        "Should the binvox to be sent into the CNN be transposed.  The networks are trained assuming +z is moving further away from the camera.  Binvox sometimes assumes y is up, and the grid needs to be flipped.  If performance is poor, this is very likely your problem."
+    )
+    args = parser.parse_args()
     cnns = {
         "depth": {
             "cnn_python_module":
@@ -212,6 +222,7 @@ if __name__ == "__main__":
         }
     }
 
-    rospy.init_node(ns + "mesh_completion_node")
-    server = MeshCompletionServer(args.ns, cnns)
+    rospy.init_node(args.ns + "mesh_completion_node")
+    server = MeshCompletionServer(
+        args.ns, cnns, transpose_input=args.transpose_input)
     rospy.spin()
