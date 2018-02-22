@@ -210,6 +210,18 @@ if __name__ == "__main__":
         help=
         "Z+ should be extending away from the camera, sometime binvox files have this as Y+ and need to be rotated. "
     )
+    parser.add_argument(
+        "__log",
+        type=str,
+        help=
+        ""
+    )
+    parser.add_argument(
+        "__name",
+        type=str,
+        help=
+        ""
+    )    
     args = parser.parse_args()
     cnns = {
         "depth": {
