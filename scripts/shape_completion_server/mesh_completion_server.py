@@ -117,7 +117,7 @@ class MeshCompletionServer(object):
             dtype=np.float32)
         batch_x[0, :, :, :, 0] = partial_vox.data
 
-        
+
         if self.flip_batch_x:
             rospy.loginfo("Flipping Batch X, if performance is poor,\
             try setting flip_batch_x=False")
@@ -213,15 +213,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "__log",
         type=str,
+        default=" ",
         help=
         ""
     )
     parser.add_argument(
         "__name",
         type=str,
+        default=" ",
         help=
         ""
-    )    
+    )
     args = parser.parse_args()
     cnns = {
         "depth": {
