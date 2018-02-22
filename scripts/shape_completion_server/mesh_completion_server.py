@@ -117,7 +117,7 @@ class MeshCompletionServer(object):
             dtype=np.float32)
         batch_x[0, :, :, :, 0] = partial_vox.data
 
-        
+
         if self.flip_batch_x:
             rospy.loginfo("Flipping Batch X, if performance is poor,\
             try setting flip_batch_x=False")
@@ -200,8 +200,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "ns",
         type=str,
-        help=
-        "Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile"
+        help= "Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile"
     )
     parser.add_argument(
         "--flip_batch_x",
@@ -211,17 +210,13 @@ if __name__ == "__main__":
         "Z+ should be extending away from the camera, sometime binvox files have this as Y+ and need to be rotated. "
     )
     parser.add_argument(
-        "__log",
+        "roslaunch arguments",
         type=str,
+        default=" ",
+        nargs=*,
         help=
         ""
     )
-    parser.add_argument(
-        "__name",
-        type=str,
-        help=
-        ""
-    )    
     args = parser.parse_args()
     cnns = {
         "depth": {
