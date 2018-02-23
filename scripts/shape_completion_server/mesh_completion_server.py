@@ -213,7 +213,7 @@ if __name__ == "__main__":
         "roslaunch arguments",
         type=str,
         default=" ",
-        nargs=*,
+        nargs="*",
         help=
         ""
     )
