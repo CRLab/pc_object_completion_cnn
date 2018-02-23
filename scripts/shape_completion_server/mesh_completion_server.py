@@ -198,8 +198,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Complete a partial object view")
     parser.add_argument(
-        "ns",
+        "-ns",
         type=str,
+        default="depth",
         help= "Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile"
     )
     parser.add_argument(
