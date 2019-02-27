@@ -41,7 +41,7 @@ git clone git@github.com:CURG/pc_pipeline_msgs.git
 git clone git@github.com:CURG/pc_object_completion_cnn.git
 
 cd ~/cnn_completion_ws/src/pc_object_completion_cnn/scripts/shape_completion_server/trained_models
-./download_trained_model.sh
+./load_trained_model.sh
 
 cd ~/cnn_completion_ws
 source /opt/ros/indigo/setup.bash
