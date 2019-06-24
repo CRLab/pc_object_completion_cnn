@@ -1,0 +1,7 @@
+
+<launch>
+	<node pkg="pc_object_completion_cnn" type="mesh_completion_server.py" name="pc_cnn_mesh" args="depth">
+		<!-- arguments define which CNN gets used, options are depth and depth_and_tactile -->
+	</node>
+	depth
+</launch>

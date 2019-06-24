@@ -117,7 +117,7 @@ class MeshCompletionServer(object):
             dtype=np.float32)
         batch_x[0, :, :, :, 0] = partial_vox.data
 
-        
+
         if self.flip_batch_x:
             rospy.loginfo("Flipping Batch X, if performance is poor,\
             try setting flip_batch_x=False")
@@ -198,10 +198,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Complete a partial object view")
     parser.add_argument(
-        "ns",
+        "-ns",
         type=str,
-        help=
-        "Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile"
+        default="depth",
+        help= "Namespace used to create action server, also determines what model to load.  Ex: depth, depth_and_tactile"
     )
     parser.add_argument(
         "--flip_batch_x",
@@ -210,18 +210,26 @@ if __name__ == "__main__":
         help=
         "Z+ should be extending away from the camera, sometime binvox files have this as Y+ and need to be rotated. "
     )
+    parser.add_argument(
+        "roslaunch arguments",
+        type=str,
+        default=" ",
+        nargs="*",
+        help=
+        ""
+    )
     args = parser.parse_args()
     cnns = {
         "depth": {
             "cnn_python_module":
-            "shape_completion_server.trained_models.depth_y17_m05_d26_h14_m22_s35_bare_keras_v2.reconstruction_network",
+            "trained_models.depth_y17_m05_d26_h14_m22_s35_bare_keras_v2.reconstruction_network",
             "weights_filepath":
             rospkg.RosPack().get_path('pc_object_completion_cnn') +
             '/scripts/shape_completion_server/trained_models/depth_y17_m05_d26_h14_m22_s35_bare_keras_v2/best_weights.h5'
         },
         "depth_and_tactile": {
             "cnn_python_module":
-            "shape_completion_server.trained_models.depth_and_tactile_y17_m08_d09_h15_m55_s53_bare_keras_v2.reconstruction_network",
+            "trained_models.depth_and_tactile_y17_m08_d09_h15_m55_s53_bare_keras_v2.reconstruction_network",
             "weights_filepath":
             rospkg.RosPack().get_path('pc_object_completion_cnn') +
             '/scripts/shape_completion_server/trained_models/depth_and_tactile_y17_m08_d09_h15_m55_s53_bare_keras_v2/best_weights.h5'
