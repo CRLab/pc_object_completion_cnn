@@ -9,6 +9,7 @@ import os
 
 import pcl
 import binvox_rw
+import plyfile
 
 import rospkg
 import actionlib
@@ -19,8 +20,9 @@ import pc_object_completion_cnn.srv
 from sensor_msgs import point_cloud2
 
 import curvox.pc_vox_utils
-import curvox.mesh_conversions
+import curvox.ros_mesh_conversions
 import curvox.cloud_conversions
+import curvox.cloud_transformations
 
 
 class MeshCompletionServer(object):
@@ -104,7 +106,7 @@ class MeshCompletionServer(object):
 
         temp_pcd_handle, temp_pcd_filepath = tempfile.mkstemp(suffix=".pcd")
         os.close(temp_pcd_handle)
-        partial_pc_np = curvox.cloud_conversions.cloud_msg_to_np(
+        partial_pc_np = curvox.cloud_transformations.cloud_msg_to_np(
             goal.partial_cloud)
         pcd = curvox.cloud_conversions.np_to_pcl(partial_pc_np)
         pcl.save(pcd, temp_pcd_filepath)
@@ -184,8 +186,8 @@ class MeshCompletionServer(object):
 
         # Now we are going to read in the post-processed mesh, that is a merge
         # of the partial view and of the completion from the CNN
-        mesh = curvox.mesh_conversions.read_mesh_msg_from_ply_filepath(
-            temp_completion_filepath)
+        temp_completion_ply = plyfile.PlyData.read(temp_completion_filepath)
+        mesh = curvox.ros_mesh_conversions.ply_to_mesh_msg(temp_completion_ply)
 
         self._result.mesh = mesh
 
